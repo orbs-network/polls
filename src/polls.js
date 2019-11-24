@@ -6,6 +6,16 @@ function getErrorFromReceipt(receipt) {
     return new Error(value);
 }
 
+// same as Buffer.from(encryptedVote, "binary")
+function toUint8Array(str) {
+    var buf = new ArrayBuffer(str.length);
+    var bufView = new Uint8Array(buf);
+    for (var i=0, strLen=str.length; i<strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return new Uint8Array(buf);
+}
+
 class Polls {
 	constructor(orbsClient, contractName) {
 		this.client = orbsClient;
@@ -128,7 +138,7 @@ class Polls {
             "vote",
             [
                 argString(id),
-                argBytes(Buffer.from(encryptedVote, "binary")),
+                argBytes(toUint8Array(encryptedVote)),
             ],
         );
 
