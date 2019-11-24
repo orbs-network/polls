@@ -1,6 +1,7 @@
 const expect = require("expect.js");
 const { createAccount, LocalSigner, encodeHex } = require("orbs-client-sdk");
 const { Polls } = require("../src/polls");
+const { readFileSync } = require("fs");
 const { deployPolls, getClient } = require("../src/deploy_polls");
 
 function sleep(timeout) {
@@ -8,6 +9,9 @@ function sleep(timeout) {
 		setTimeout(resolve, timeout);
 	})
 }
+
+const publicKey = readFileSync(`${__dirname}/keys/id_rsa.pub`).toString();
+const privateKey = readFileSync(`${__dirname}/keys/id_rsa`).toString();
 
 describe("Polls", () => {
     it("updates contract state", async () => {
@@ -18,29 +22,31 @@ describe("Polls", () => {
 		await deployPolls(getClient(signer), contractName);
 		const polls = new Polls(getClient(signer), contractName);
 
-		const emptyPoll = await polls.get("best-nicolas-cage-movie");
+        let id = "best-nicolas-cage-movie";
+        const emptyPoll = await polls.get(id);
 		expect(emptyPoll.Name).to.be.eql("");
 
-        await polls.create("best-nicolas-cage-movie", "Best Nicolas Cage Movie",
-			"010203", ["Raising Arizona (1987)", "Vampire's Kiss (1989)"]);
+        await polls.create(id, "Best Nicolas Cage Movie",
+			publicKey, ["Raising Arizona (1987)", "Vampire's Kiss (1989)"]);
 
-        const bestMoviePoll = await polls.get("best-nicolas-cage-movie");
+        const bestMoviePoll = await polls.get(id);
         expect(bestMoviePoll).to.be.eql({
-			Id: "best-nicolas-cage-movie",
+			Id: id,
 			Owner: contractOwner.address.slice(2).toLowerCase(),
 			Name: "Best Nicolas Cage Movie",
-			PublicKey: "010203",
+			PublicKey: publicKey,
             Options: ["Raising Arizona (1987)", "Vampire's Kiss (1989)"]
 		});
 
-        expect(await polls.countVotes("best-nicolas-cage-movie")).to.be.eql(0);
+        expect(await polls.countVotes(id)).to.be.eql(0);
 
-        await polls.vote("best-nicolas-cage-movie", 1);
+        await polls.vote(id, 1);
+        expect(await polls.countVotes(id)).to.be.eql(1);
 
-        expect(await polls.countVotes("best-nicolas-cage-movie")).to.be.eql(1);
+        await polls.finish(id, privateKey);
 
-        expect(await polls.results("best-nicolas-cage-movie")).to.be.eql({
+        expect(await polls.results(id)).to.be.eql({
 			"Vampire's Kiss (1989)": 1,
-		})
+		});
 	});
 });

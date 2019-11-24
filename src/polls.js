@@ -1,4 +1,5 @@
-const { argString, argBytes, argUint64, argUint32 } = require("orbs-client-sdk");
+const { argString, argBytes, argUint64, argUint32, decodeHex, encodeHex } = require("orbs-client-sdk");
+const forge = require("node-forge");
 
 function getErrorFromReceipt(receipt) {
     const value = receipt.outputArguments.length == 0 ? receipt.executionResult : receipt.outputArguments[0].value;
@@ -11,11 +12,11 @@ class Polls {
 		this.contractName = contractName;
 	}
 
-	async create(id, name, publicKeyHex, options) {
+	async create(id, name, publicKey, options) {
 		const args = [
             argString(id),
 			argString(name),
-			argString(publicKeyHex)
+			argString(publicKey)
         ];
 
 		options.forEach((option) => {
@@ -85,13 +86,49 @@ class Polls {
         return JSON.parse(receipt.outputArguments[0].value);
     }
 
+    async getPublicKey(id) {
+        const query = await this.client.createQuery(
+            this.contractName,
+            "getPublicKey",
+            [
+                argString(id),
+            ]
+        );
+
+        const receipt = await this.client.sendQuery(query);
+        if (receipt.executionResult !== 'SUCCESS') {
+            throw getErrorFromReceipt(receipt);
+        }
+
+        return receipt.outputArguments[0].value;
+    }
+
+    async finish(id, privateKey) {
+        const [ tx, txId ] = await this.client.createTransaction(
+            this.contractName,
+            "finish",
+            [
+                argString(id),
+                argString(privateKey),
+            ],
+        );
+
+        const receipt = await this.client.sendTransaction(tx);
+        if (receipt.executionResult !== 'SUCCESS') {
+            throw getErrorFromReceipt(receipt);
+        }
+    }
+
     async vote(id, singleVote) {
+        const PKI = forge.pki;
+        const rsaPublicKey = PKI.publicKeyFromPem(await this.getPublicKey(id));
+        const encryptedVote = rsaPublicKey.encrypt(singleVote.toString());
         const [ tx, txId ] = await this.client.createTransaction(
             this.contractName,
             "vote",
             [
                 argString(id),
-                argUint32(singleVote),
+                argBytes(Buffer.from(encryptedVote, "binary")),
             ],
         );
 
@@ -103,5 +140,5 @@ class Polls {
 }
 
 module.exports = {
-	Polls
+	Polls,
 };

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "gamma:start": "gamma-cli start-local -wait",
+        "gamma:start": "gamma-cli start-local -wait -override-config '{\"processor-sanitize-deployed-contracts\":false}'",
         "gamma:stop": "gamma-cli stop-local",
         "polls:local": "node ./src/deploy_polls.js",
         "test": "mocha test --timeout 20000 --exit"

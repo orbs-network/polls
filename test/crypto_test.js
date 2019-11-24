@@ -1,11 +1,13 @@
 const expect = require("expect.js");
 const forge = require("node-forge");
 const { readFileSync } = require("fs");
+const { toString, toBytes } = require("../src/polls");
+const { encodeHex } = require("orbs-client-sdk");
 
 const publicKey = readFileSync(`${__dirname}/keys/id_rsa.pub`).toString();
 const privateKey = readFileSync(`${__dirname}/keys/id_rsa`).toString();
 
-describe.only("Encryption", () => {
+describe("Encryption", () => {
     it("encrypts and decrypts a simple value", async () => {
         const PKI = forge.pki;
         const rsaPublicKey = PKI.publicKeyFromPem(publicKey);
