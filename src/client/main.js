@@ -1,13 +1,20 @@
 import App from "./App.svelte";
-import {
-    Client,
-    encodeHex,
-    decodeHex,
-    LocalSigner,
-    addressToBytes,
-} from "orbs-client-sdk";
+import { Client } from "orbs-client-sdk";
 import { Wallet } from "orbs-wallet/src/wallet/wallet";
 import { Polls } from "../polls";
+import { pki } from "node-forge";
+
+const POLLS_PUBLIC_KEY = "polls_public_key";
+const POLLS_PRIVATE_KEY = "polls_private_key";
+
+if (!localStorage.getItem(POLLS_PUBLIC_KEY)) {
+    const keys = pki.rsa.generateKeyPair(2048);
+    localStorage.setItem(POLLS_PUBLIC_KEY, pki.publicKeyToPem(keys.publicKey));
+    localStorage.setItem(POLLS_PRIVATE_KEY, pki.privateKeyToPem(keys.privateKey));
+}
+
+const publicKey = localStorage.getItem(POLLS_PUBLIC_KEY);
+const privateKey = localStorage.getItem(POLLS_PRIVATE_KEY);
 
 export default (async () => {
     const wallet = new Wallet(window);
@@ -36,6 +43,8 @@ export default (async () => {
             config: {
                 prismURL: process.env.ORBS_PRISM_URL,
                 vchain: process.env.ORBS_VCHAIN,
+                publicKey,
+                privateKey,
             }
         }
     });
