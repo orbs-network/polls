@@ -1,0 +1,3 @@
+[submodule "identity"]
+	path = identity
+	url = git@github.com:orbs-network/identity.git
