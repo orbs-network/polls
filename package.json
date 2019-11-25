@@ -23,6 +23,7 @@
         "lodash": "^4.17.15",
         "node-forge": "^0.9.1",
         "orbs-client-sdk": "2.0.0",
-        "orbs-wallet": "https://github.com/orbs-network/wallet#master"
+        "orbs-wallet": "https://github.com/orbs-network/wallet#master",
+        "uuid": "^3.3.3"
     }
 }
