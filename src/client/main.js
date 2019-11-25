@@ -26,19 +26,19 @@ export default (async () => {
         throw e;
     }
 
-    const signer = accounts[0];
+    const account = accounts[0];
     const client = new Client(
         process.env.ORBS_NODE_ADDRESS,
         process.env.ORBS_VCHAIN,
         "TEST_NET",
-        signer,
+        account,
     );
 
     const polls = new Polls(client, process.env.ORBS_POLLS);
     const app = new App({
-        target: document.body,
+        target: document.getElementById("content"),
         props: {
-            client,
+            account,
             polls,
             config: {
                 prismURL: process.env.ORBS_PRISM_URL,
