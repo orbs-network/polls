@@ -90,7 +90,11 @@ func getPublicKey(id string) string {
 }
 
 func _identity() string {
-	return hex.EncodeToString(address.GetSignerAddress())
+	return _identify(address.GetSignerAddress())
+}
+
+func _identify(addr []byte) string {
+	return hex.EncodeToString(addr)
 }
 
 func _getOptions(id string) (options []string) {

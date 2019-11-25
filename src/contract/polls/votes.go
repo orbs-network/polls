@@ -6,19 +6,25 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
-	"github.com/orbs-network/orbs-contract-sdk/go/sdk/v1/state"
 	"strconv"
+
+	"github.com/orbs-network/orbs-contract-sdk/go/sdk/v1/state"
 )
 
 func countVotes(id string) uint32 {
 	return state.ReadUint32(_countKey(id))
 }
 
-func vote(id string, singleVote []byte)  {
+func vote(id string, singleVote []byte) {
 	voter := _identity()
+	alreadyVoted := _alreadyVoted(id, voter)
+
 	state.WriteBytes(_singleVoteKey(id, voter), singleVote)
-	state.WriteString(_votersListKey(id, countVotes(id)), voter)
-	_incVoteCount(id)
+
+	if !alreadyVoted {
+		state.WriteString(_votersListKey(id, countVotes(id)), voter)
+		_incVoteCount(id)
+	}
 }
 
 func finish(id string, privateKey string) {
@@ -33,8 +39,6 @@ func results(id string) string {
 	if len(_getPrivateKey(id)) == 0 {
 		panic("voting did not finish yet")
 	}
-
-	println("sup", _getPrivateKey(id)==nil, len(_getPrivateKey(id)))
 
 	data := make(map[string]uint32)
 	options := _getOptions(id)
@@ -59,7 +63,6 @@ func results(id string) string {
 		} else {
 			data[options[int(decryptedVote)]] += 1
 		}
-
 
 	}
 
@@ -86,15 +89,15 @@ func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) []byte {
 }
 
 func _singleVoteKey(id string, voter string) []byte {
-	return []byte("polls."+id+".votes."+voter)
+	return []byte("polls." + id + ".votes." + voter)
 }
 
 func _votersListKey(id string, index uint32) []byte {
-	return []byte("polls."+id+".voters."+strconv.FormatUint(uint64(index), 10))
+	return []byte("polls." + id + ".voters." + strconv.FormatUint(uint64(index), 10))
 }
 
 func _countKey(id string) []byte {
-	return []byte("polls."+id+".count")
+	return []byte("polls." + id + ".count")
 }
 
 func _incVoteCount(id string) uint32 {
@@ -105,4 +108,8 @@ func _incVoteCount(id string) uint32 {
 
 func _getPrivateKey(id string) []byte {
 	return state.ReadBytes(_privateKey(id))
+}
+
+func _alreadyVoted(id string, voter string) bool {
+	return len(state.ReadBytes(_singleVoteKey(id, voter))) != 0
 }

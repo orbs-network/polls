@@ -40,6 +40,10 @@ describe("Polls", () => {
 
         expect(await polls.countVotes(id)).to.be.eql(0);
 
+        await polls.vote(id, 0);
+        expect(await polls.countVotes(id)).to.be.eql(1);
+
+		// voting the second time should update the vote but not the number of votes
         await polls.vote(id, 1);
         expect(await polls.countVotes(id)).to.be.eql(1);
 
