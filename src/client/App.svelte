@@ -12,10 +12,9 @@ let isOwner = false;
 let alreadyVoted = false;
 let anotherPoll = {};
 let answer;
-let results;
 
 function getCurrentPollId() {
-    return document.location.hash.slice(1);
+    return document.location.search.slice(1);
 }
 
 async function checkOwnership() {
@@ -23,7 +22,7 @@ async function checkOwnership() {
 }
 
 async function checkIfAlreadyVoted() {
-    // alreadyVoted 
+    alreadyVoted = await polls.hasVoted(getCurrentPollId());
 }
 
 async function createPoll() {
@@ -31,7 +30,7 @@ async function createPoll() {
     try {
         const options = anotherPoll.Options.split("\n").filter(x => !x.isEmpty);
         await polls.create(id, anotherPoll.Name, config.publicKey, options);
-        document.location.hash = id;
+        document.location.search = id;
         render();
     } catch (e) {
         console.log(e);
@@ -48,15 +47,14 @@ async function submitAnswer() {
 
 async function endPoll() {
     await polls.finish(getCurrentPollId(), config.privateKey);
-    results = await polls.results(getCurrentPollId());
+    await render();
 }
 
 async function render() {
     try {
-        console.log(getCurrentPollId())
         poll = await polls.get(getCurrentPollId());
-        console.log(poll)
         await checkOwnership();
+        await checkIfAlreadyVoted();
     } catch (e) {
         console.log(e);
     }
@@ -68,6 +66,7 @@ render();
 {#if !isEmpty(poll.Name)}
 <h1>{poll.Name}</h1>
 
+{#if isEmpty(poll.Results)}
 {#if !alreadyVoted}
 <div class="poll">
     {#each poll.Options as option, i}
@@ -87,6 +86,15 @@ Thank you for voting!
 <button on:click|preventDefault={endPoll}>finish the poll</button>
 {/if}
 </div>
+{:else}
+<p>The results are in!</p>
+
+{#each poll.Results as { Name, Value}}
+    <ul>
+    <li>{Name}: {Value}</li>
+    </ul>
+    {/each}
+{/if}
 
 {:else}
 <h1>Creating a new poll</h1>
@@ -98,11 +106,4 @@ Thank you for voting!
 <button on:click|preventDefault={createPoll}>create poll</button>
 </div>
 </div>
-{/if}
-
-{#if !isEmpty(results)}
-<pre>
-{JSON.stringify(poll, 2, 2)}
-{JSON.stringify(results, 2, 2)}
-</pre>
 {/if}

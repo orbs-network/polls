@@ -79,10 +79,10 @@ class Polls {
         return receipt.outputArguments[0].value;
     }
 
-    async results(id) {
+    async hasVoted(id) {
         const query = await this.client.createQuery(
             this.contractName,
-            "results",
+            "hasVoted",
             [
                 argString(id),
             ]
@@ -93,7 +93,7 @@ class Polls {
             throw getErrorFromReceipt(receipt);
         }
 
-        return JSON.parse(receipt.outputArguments[0].value);
+        return receipt.outputArguments[0].value > 0;
     }
 
     async getPublicKey(id) {

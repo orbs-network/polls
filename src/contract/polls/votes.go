@@ -47,6 +47,15 @@ func finish(id string, privateKey string) {
 	state.WriteBytes(_resultsKey(id), resultsJSON)
 }
 
+func hasVoted(id string) uint32 {
+	voter := _identity()
+	if _alreadyVoted(id, voter) {
+		return 1
+	}
+
+	return 0
+}
+
 func _calculateResults(id string) []VotesAggregation {
 	if len(_getPrivateKey(id)) == 0 {
 		panic("voting did not finish yet")

@@ -12,6 +12,7 @@ import (
 var PUBLIC = sdk.Export(
 	create, get, getPublicKey,
 	vote, countVotes, finish,
+	hasVoted,
 )
 var SYSTEM = sdk.Export(_init)
 
