@@ -1,9 +1,11 @@
 const { readFileSync, readdirSync } = require("fs");
 const { join } = require("path");
+const identity = require("../identity/src/deploy_identity");
 const {
 	Client, LocalSigner, createAccount,
 	PROCESSOR_TYPE_NATIVE, NetworkType
 } = require("orbs-client-sdk");
+const { Polls } = require("./polls");
 
 function getClient(signer) {
     const endpoint = process.env.ORBS_NODE_ADDRESS || "http://localhost:8080";
@@ -27,6 +29,23 @@ async function deployPolls(client, contractName) {
 	}
 }
 
+function getContractName() {
+	return process.env.ORBS_POLLS || "Polls";
+}
+
+function getLocalSigner() {
+	const { ORBS_PUBLIC_KEY, ORBS_PRIVATE_KEY } = process.env;
+
+	if (!(ORBS_PUBLIC_KEY && ORBS_PRIVATE_KEY)) {
+		return new LocalSigner(createAccount());
+	}
+
+	return new LocalSigner({
+        publicKey: decodeHex(ORBS_PUBLIC_KEY),
+        privateKey: decodeHex(ORBS_PRIVATE_KEY),
+    });
+}
+
 module.exports = {
 	getClient,
 	getPollsContractCode,
@@ -36,8 +55,19 @@ module.exports = {
 if (!module.parent) {
 	(async () => {
 		try {
-			const signer = new LocalSigner(createAccount());
-			await deployPolls(getClient(signer), "Polls")
+			const client = getClient(getLocalSigner());
+			const identityContractName = identity.getContractName();
+			const contractName = getContractName();
+
+			console.log("deploying", identityContractName);
+			await identity.deployIdentity(client, identityContractName)
+			console.log("deploying", contractName);
+			await deployPolls(client, contractName);
+
+			console.log("linking", contractName, "to", identityContractName);
+			const polls = new Polls(client, contractName);
+			await polls.setIdentityContract(identityContractName);
+
 			console.log("Deployed Polls smart contract successfully");
 		} catch (e) {
 			console.error(e);

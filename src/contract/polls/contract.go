@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/hex"
+	"bytes"
 	"encoding/json"
 
 	"github.com/orbs-network/orbs-contract-sdk/go/sdk/v1"
@@ -11,13 +11,14 @@ import (
 
 var PUBLIC = sdk.Export(
 	create, get, getPublicKey,
-	vote, countVotes, finish,
-	hasVoted,
+	vote, hasVoted, countVotes, finish,
+	setIdentityContractAddress,
 )
 var SYSTEM = sdk.Export(_init)
+var CONTRACT_OWNER_KEY = []byte("CONTRACT_OWNER")
 
 func _init() {
-
+	state.WriteBytes(CONTRACT_OWNER_KEY, address.GetSignerAddress())
 }
 
 type Poll struct {
@@ -99,15 +100,13 @@ func getPublicKey(id string) string {
 	return state.ReadString(_publicKey(id))
 }
 
-func _identity() string {
-	return _identify(address.GetSignerAddress())
-}
-
-func _identify(addr []byte) string {
-	return hex.EncodeToString(addr)
-}
-
 func _getOptions(id string) (options []string) {
 	json.Unmarshal(state.ReadBytes(_optionsKey(id)), &options)
 	return options
+}
+
+func _contractOwnerOnly() {
+	if !bytes.Equal(state.ReadBytes(CONTRACT_OWNER_KEY), address.GetSignerAddress()) {
+		panic("only contract owner can perform this action")
+	}
 }

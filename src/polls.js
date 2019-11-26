@@ -10,57 +10,72 @@ function getErrorFromReceipt(receipt) {
 function toUint8Array(str) {
     var buf = new ArrayBuffer(str.length);
     var bufView = new Uint8Array(buf);
-    for (var i=0, strLen=str.length; i<strLen; i++) {
+    for (var i = 0, strLen = str.length; i < strLen; i++) {
         bufView[i] = str.charCodeAt(i);
     }
     return new Uint8Array(buf);
 }
 
 class Polls {
-	constructor(orbsClient, contractName) {
-		this.client = orbsClient;
-		this.contractName = contractName;
-	}
+    constructor(orbsClient, contractName) {
+        this.client = orbsClient;
+        this.contractName = contractName;
+    }
 
-	async create(id, name, publicKey, options) {
-		const args = [
+    async create(id, name, publicKey, options) {
+        const args = [
             argString(id),
-			argString(name),
-			argString(publicKey)
+            argString(name),
+            argString(publicKey)
         ];
 
-		options.forEach((option) => {
-			args.push(argString(option));
-		});
+        options.forEach((option) => {
+            args.push(argString(option));
+        });
 
-		const [ tx, txId ] = await this.client.createTransaction(
-			this.contractName,
-			"create",
-			args
-		);
+        const [tx, txId] = await this.client.createTransaction(
+            this.contractName,
+            "create",
+            args
+        );
 
-		const receipt = await this.client.sendTransaction(tx);
-		if (receipt.executionResult !== 'SUCCESS') {
-			throw getErrorFromReceipt(receipt);
-		}
-	}
+        const receipt = await this.client.sendTransaction(tx);
+        if (receipt.executionResult !== 'SUCCESS') {
+            throw getErrorFromReceipt(receipt);
+        }
+    }
 
-	async get(id) {
-		const query = await this.client.createQuery(
-			this.contractName,
-			"get",
-			[
-				argString(id),
-			]
-		);
+    async setIdentityContractAddress(identityContractName) {
+        const [tx, txId] = await this.client.createTransaction(
+            this.contractName,
+            "setIdentityContractAddress",
+            [
+                argString(identityContractName)
+            ]
+        );
 
-		const receipt = await this.client.sendQuery(query);
-		if (receipt.executionResult !== 'SUCCESS') {
-			throw getErrorFromReceipt(receipt);
-		}
+        const receipt = await this.client.sendTransaction(tx);
+        if (receipt.executionResult !== 'SUCCESS') {
+            throw getErrorFromReceipt(receipt);
+        }
+    }
 
-		return JSON.parse(receipt.outputArguments[0].value);
-	}
+    async get(id) {
+        const query = await this.client.createQuery(
+            this.contractName,
+            "get",
+            [
+                argString(id),
+            ]
+        );
+
+        const receipt = await this.client.sendQuery(query);
+        if (receipt.executionResult !== 'SUCCESS') {
+            throw getErrorFromReceipt(receipt);
+        }
+
+        return JSON.parse(receipt.outputArguments[0].value);
+    }
 
     async countVotes(id) {
         const query = await this.client.createQuery(
@@ -114,7 +129,7 @@ class Polls {
     }
 
     async finish(id, privateKey) {
-        const [ tx, txId ] = await this.client.createTransaction(
+        const [tx, txId] = await this.client.createTransaction(
             this.contractName,
             "finish",
             [
@@ -133,7 +148,7 @@ class Polls {
         const PKI = forge.pki;
         const rsaPublicKey = PKI.publicKeyFromPem(await this.getPublicKey(id));
         const encryptedVote = rsaPublicKey.encrypt(singleVote.toString());
-        const [ tx, txId ] = await this.client.createTransaction(
+        const [tx, txId] = await this.client.createTransaction(
             this.contractName,
             "vote",
             [
@@ -150,5 +165,5 @@ class Polls {
 }
 
 module.exports = {
-	Polls,
+    Polls,
 };
