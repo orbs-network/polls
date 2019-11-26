@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
+
 	"github.com/orbs-network/orbs-contract-sdk/go/sdk/v1"
 	"github.com/orbs-network/orbs-contract-sdk/go/sdk/v1/address"
 	"github.com/orbs-network/orbs-contract-sdk/go/sdk/v1/state"
@@ -10,8 +11,8 @@ import (
 
 var PUBLIC = sdk.Export(
 	create, get, getPublicKey,
-	vote, countVotes, results, finish,
-	)
+	vote, countVotes, finish,
+)
 var SYSTEM = sdk.Export(_init)
 
 func _init() {
@@ -24,6 +25,12 @@ type Poll struct {
 	Name      string
 	PublicKey string
 	Options   []string
+	Results   []VotesAggregation
+}
+
+type VotesAggregation struct {
+	Name  string
+	Value uint32
 }
 
 // FIXME add dates
@@ -48,6 +55,7 @@ func create(id string, name string, publicKey string, options ...string) {
 
 func get(id string) string {
 	options := _getOptions(id)
+	results := _getResults(id)
 
 	poll := Poll{
 		Id:        id,
@@ -55,6 +63,7 @@ func get(id string) string {
 		Name:      state.ReadString(_nameKey(id)),
 		PublicKey: getPublicKey(id),
 		Options:   options,
+		Results:   results,
 	}
 
 	rawJSON, _ := json.Marshal(poll)
@@ -62,23 +71,23 @@ func get(id string) string {
 }
 
 func _nameKey(id string) []byte {
-	return []byte("polls."+id+".name")
+	return []byte("polls." + id + ".name")
 }
 
 func _publicKey(id string) []byte {
-	return []byte("polls."+id+".publicKey")
+	return []byte("polls." + id + ".publicKey")
 }
 
 func _privateKey(id string) []byte {
-	return []byte("polls."+id+".privateKey")
+	return []byte("polls." + id + ".privateKey")
 }
 
 func _optionsKey(id string) []byte {
-	return []byte("polls."+id+".options")
+	return []byte("polls." + id + ".options")
 }
 
 func _ownerKey(id string) []byte {
-	return []byte("polls."+id+".owner")
+	return []byte("polls." + id + ".owner")
 }
 
 func _getOwner(id string) string {

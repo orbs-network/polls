@@ -16,6 +16,10 @@ func countVotes(id string) uint32 {
 }
 
 func vote(id string, singleVote []byte) {
+	if len(_getResults(id)) != 0 {
+		panic("results are already in")
+	}
+
 	voter := _identity()
 	alreadyVoted := _alreadyVoted(id, voter)
 
@@ -32,21 +36,34 @@ func finish(id string, privateKey string) {
 		panic("only the owner can finish the voting process")
 	}
 
+	if len(_getResults(id)) != 0 {
+		panic("results are already in")
+	}
+
 	state.WriteString(_privateKey(id), privateKey)
+
+	results := _calculateResults(id)
+	resultsJSON, _ := json.Marshal(results)
+	state.WriteBytes(_resultsKey(id), resultsJSON)
 }
 
-func results(id string) string {
+func _calculateResults(id string) []VotesAggregation {
 	if len(_getPrivateKey(id)) == 0 {
 		panic("voting did not finish yet")
 	}
 
-	data := make(map[string]uint32)
+	var data []VotesAggregation
 	options := _getOptions(id)
+	for _, option := range options {
+		data = append(data, VotesAggregation{
+			Name: option,
+		})
+	}
 
 	totalVotes := countVotes(id)
-
 	privateKey := BytesToPrivateKey(_getPrivateKey(id))
 
+	invalidVotes := uint32(0)
 	for i := uint32(0); i < totalVotes; i++ {
 		voter := state.ReadString(_votersListKey(id, i))
 		singleVote := state.ReadBytes(_singleVoteKey(id, voter))
@@ -59,15 +76,20 @@ func results(id string) string {
 		}
 
 		if err == nil && decryptedVote >= uint64(len(options)) {
-			data["Invalid votes"] += 1
+			invalidVotes++
 		} else {
-			data[options[int(decryptedVote)]] += 1
+			data[int(decryptedVote)].Value++
 		}
-
 	}
 
-	rawJson, _ := json.Marshal(data)
-	return string(rawJson)
+	if invalidVotes > 0 {
+		data = append(data, VotesAggregation{
+			Name:  "Invalid votes",
+			Value: invalidVotes,
+		})
+	}
+
+	return data
 }
 
 func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
@@ -112,4 +134,13 @@ func _getPrivateKey(id string) []byte {
 
 func _alreadyVoted(id string, voter string) bool {
 	return len(state.ReadBytes(_singleVoteKey(id, voter))) != 0
+}
+
+func _resultsKey(id string) []byte {
+	return []byte("polls." + id + ".results")
+}
+
+func _getResults(id string) (results []VotesAggregation) {
+	json.Unmarshal(state.ReadBytes(_resultsKey(id)), &results)
+	return
 }

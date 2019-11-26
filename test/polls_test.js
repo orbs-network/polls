@@ -29,13 +29,14 @@ describe("Polls", () => {
         await polls.create(id, "Best Nicolas Cage Movie",
 			publicKey, ["Raising Arizona (1987)", "Vampire's Kiss (1989)"]);
 
-        const bestMoviePoll = await polls.get(id);
+		const bestMoviePoll = await polls.get(id);
         expect(bestMoviePoll).to.be.eql({
 			Id: id,
 			Owner: contractOwner.address.slice(2).toLowerCase(),
 			Name: "Best Nicolas Cage Movie",
 			PublicKey: publicKey,
-            Options: ["Raising Arizona (1987)", "Vampire's Kiss (1989)"]
+			Options: ["Raising Arizona (1987)", "Vampire's Kiss (1989)"],
+			Results: null,
 		});
 
         expect(await polls.countVotes(id)).to.be.eql(0);
@@ -49,8 +50,18 @@ describe("Polls", () => {
 
         await polls.finish(id, privateKey);
 
-        expect(await polls.results(id)).to.be.eql({
-			"Vampire's Kiss (1989)": 1,
-		});
+        expect((await polls.get(id)).Results).to.be.eql([
+			{Name: "Raising Arizona (1987)", Value: 0},
+			{Name: "Vampire's Kiss (1989)", Value: 1},
+		]);
+
+
+		let err;
+		try {
+			await polls.vote(id, 0);
+		} catch (e) {
+			err = e;
+		}
+		expect(err).to.be.eql(new Error("Error: results are already in"));
 	});
 });
