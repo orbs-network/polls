@@ -3,7 +3,8 @@ const { join } = require("path");
 const identity = require("../identity/src/deploy_identity");
 const {
 	Client, LocalSigner, createAccount,
-	PROCESSOR_TYPE_NATIVE, NetworkType
+	PROCESSOR_TYPE_NATIVE, NetworkType,
+	decodeHex,
 } = require("orbs-client-sdk");
 const { Polls } = require("./polls");
 
@@ -66,7 +67,7 @@ if (!module.parent) {
 
 			console.log("linking", contractName, "to", identityContractName);
 			const polls = new Polls(client, contractName);
-			await polls.setIdentityContract(identityContractName);
+			await polls.setIdentityContractAddress(identityContractName);
 
 			console.log("Deployed Polls smart contract successfully");
 		} catch (e) {

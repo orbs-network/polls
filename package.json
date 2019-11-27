@@ -7,7 +7,7 @@
         "gamma:stop": "gamma-cli stop-local",
         "polls:local": "node ./src/deploy_polls.js",
         "test": "mocha test --timeout 20000 --exit",
-        "dev": "ORBS_NODE_ADDRESS=http://localhost:8080 ORBS_VCHAIN=42 ORBS_PRISM_URL=http://localhost:3000 ORBS_POLLS=Polls webpack-dev-server --port 8000"
+        "dev": "ORBS_NODE_ADDRESS=http://localhost:8080 ORBS_VCHAIN=42 ORBS_PRISM_URL=http://localhost:3000 ORBS_POLLS=Polls ORBS_IDENTITY=Identity ORBS_IDENTITY_SIGN_IN_URL=http://localhost:9000 webpack-dev-server --port 8000"
     },
     "devDependencies": {
         "css-loader": "^3.2.0",

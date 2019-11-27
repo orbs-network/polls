@@ -3,6 +3,7 @@ import { Client } from "orbs-client-sdk";
 import { Wallet } from "orbs-wallet/src/wallet/wallet";
 import { Polls } from "../polls";
 import { pki } from "node-forge";
+import { Identity } from "../../identity/src/identity";
 
 const POLLS_PUBLIC_KEY = "polls_public_key";
 const POLLS_PRIVATE_KEY = "polls_private_key";
@@ -35,14 +36,17 @@ export default (async () => {
     );
 
     const polls = new Polls(client, process.env.ORBS_POLLS);
+    const identity = new Identity(client, process.env.ORBS_IDENTITY);
     const app = new App({
         target: document.getElementById("content"),
         props: {
             account,
             polls,
+            identity,
             config: {
                 prismURL: process.env.ORBS_PRISM_URL,
                 vchain: process.env.ORBS_VCHAIN,
+                signInUrl: process.env.ORBS_IDENTITY_SIGN_IN_URL,
                 publicKey,
                 privateKey,
             }

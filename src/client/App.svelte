@@ -3,6 +3,7 @@ import { isEmpty } from "lodash";
 import { v4 } from "uuid";
 export let account;
 export let polls;
+export let identity;
 export let config;
 
 let poll = {
@@ -13,12 +14,14 @@ let alreadyVoted = false;
 let anotherPoll = {};
 let answer;
 
+let myIdentity;
+
 function getCurrentPollId() {
     return document.location.search.slice(1);
 }
 
 async function checkOwnership() {
-    isOwner = poll.Owner == (await account.getAddress()).slice(2).toLowerCase();
+    isOwner = (poll.Owner == await getIdentity());
 }
 
 async function checkIfAlreadyVoted() {
@@ -59,6 +62,14 @@ async function render() {
         console.log(e);
     }
 }
+
+async function getIdentity() {
+    myIdentity = await identity.getIdByAddress(await account.getAddress());
+    return myIdentity;
+}
+
+getIdentity();
+setInterval(getIdentity, 5000); // try every 5s
 
 render();
 </script>
@@ -107,3 +118,12 @@ Thank you for voting!
 </div>
 </div>
 {/if}
+
+<div class="identity">
+{#if isEmpty(myIdentity)}
+<p>You are not signed in! Only signed in users can create polls.</p>
+<p>Please sign in <a href="{config.signInUrl}" target="_blank">here</a></p>
+{:else}
+<p>You are signed in as <span class="id">{myIdentity}</span></p>
+{/if}
+</div>
