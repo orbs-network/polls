@@ -45,4 +45,8 @@ npm run polls:local
 npm run dev
 ```
 
+### Wallet extension
+
+Install latest version of the [Orbs Wallet extension](https://github.com/orbs-network/wallet) for your browser.
+
 Open [polls app page](http://localhost:8000)
